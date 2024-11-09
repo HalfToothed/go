@@ -1,30 +1,40 @@
 package main
 
 import (
-	"gorm.io/driver/postgres"
+	"gin-bookstore-api/core"
+	"gin-bookstore-api/models"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-type Book struct {
-	gorm.Model
-	Title  string
-	Author string
-	Read   bool
-}
+var dbClient *gorm.DB
 
 func main() {
 
-	dsn := "host=localhost user=postgres password=3141 dbname=test sslmode=disable TimeZone=Asia/Shanghai"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-
-	if err != nil {
-		panic("failed to connect database")
-	}
+	dbClient = core.Client()
 
 	// Migrate the schema
-	db.AutoMigrate(&Book{})
+	dbClient.AutoMigrate(&models.Book{})
 
-	// Create
-	db.Create(&Book{Title: "The Hobbit", Author: "J.R.R Tolkien", Read: true})
+	router := gin.Default()
+	router.POST("/book", postBook)
+	router.Run(":8080")
+}
 
+func postBook(c *gin.Context) {
+	var newBook models.Book
+
+	if err := c.BindJSON(&newBook); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Json"})
+		return
+	}
+
+	if result := dbClient.Create(&newBook); result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	c.IndentedJSON(http.StatusCreated, newBook)
 }
