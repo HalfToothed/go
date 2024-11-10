@@ -10,16 +10,17 @@ import (
 
 type Server struct {
 	gin *gin.Engine
-	db  database.DBClient
+	db  database.Client
 }
 
-func NewServer(db database.DBClient) *Server {
+func NewServer(db database.Client) *Server {
 
 	server := &Server{
 
 		gin: gin.Default(),
 		db:  db,
 	}
+	server.endpoints()
 
 	return server
 }
