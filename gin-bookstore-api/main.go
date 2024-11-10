@@ -1,7 +1,8 @@
 package main
 
 import (
-	"gin-bookstore-api/core"
+	"gin-bookstore-api/core/database"
+
 	"gin-bookstore-api/models"
 	"net/http"
 
@@ -13,13 +14,16 @@ var dbClient *gorm.DB
 
 func main() {
 
-	dbClient = core.Client()
+	dbClient = database.Client()
 
 	// Migrate the schema
 	dbClient.AutoMigrate(&models.Book{})
 
 	router := gin.Default()
+	router.GET("/", getAllBooks)
+	router.GET("/book/:id", getBook)
 	router.POST("/book", postBook)
+	router.DELETE("/book/delete/:id", deleteBook)
 	router.Run(":8080")
 }
 
@@ -37,4 +41,44 @@ func postBook(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusCreated, newBook)
+}
+
+func getBook(c *gin.Context) {
+	id := c.Param("id")
+
+	var book models.Book
+	result := dbClient.First(&book, id)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, book)
+}
+
+func deleteBook(c *gin.Context) {
+	id := c.Param("id")
+
+	var book models.Book
+	if result := dbClient.Delete(&book, id); result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, book)
+}
+
+func getAllBooks(c *gin.Context) {
+
+	var books []models.Book
+
+	result := dbClient.Find(&books)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, books)
 }
