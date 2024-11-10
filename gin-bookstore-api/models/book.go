@@ -19,7 +19,7 @@ type BookParams struct {
 }
 
 type UpdateBookParams struct {
-	Title           string `json:"title" binding:"required"`
-	ISBN            string `json:"isbn" binding:"required"`
-	PublicationDate string `json:"publication_date" binding:"required"`
+	Title  string `json:title  binding:"required"`
+	Author string `json:author binding:"required"`
+	Read   bool   `json:read`
 }

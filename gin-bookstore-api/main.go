@@ -3,82 +3,89 @@ package main
 import (
 	"gin-bookstore-api/core/database"
 
-	"gin-bookstore-api/models"
-	"net/http"
+	"log"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-var dbClient *gorm.DB
+var dbClient database.DBClient
 
 func main() {
 
-	dbClient = database.Client()
+	db, err := database.NewClient()
 
-	// Migrate the schema
-	dbClient.AutoMigrate(&models.Book{})
+	if err != nil {
+		panic("database Connection failed")
+	}
+
+	err = db.DBMigrate()
+	if err != nil {
+		log.Fatal("Database Migration Failed!")
+		return
+	}
+
+	dbClient = db
 
 	router := gin.Default()
-	router.GET("/", getAllBooks)
-	router.GET("/book/:id", getBook)
-	router.POST("/book", postBook)
-	router.DELETE("/book/delete/:id", deleteBook)
+	// router.GET("/", getAllBooks)
+	// router.GET("/book/:id", getBook)
+	// router.POST("/book", postBook)
+	// router.DELETE("/book/delete/:id", deleteBook)
 	router.Run(":8080")
 }
 
-func postBook(c *gin.Context) {
-	var newBook models.Book
+// func postBook(c *gin.Context) {
+// 	var newBook models.Book
 
-	if err := c.BindJSON(&newBook); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Json"})
-		return
-	}
+// 	if err := c.BindJSON(&newBook); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Json"})
+// 		return
+// 	}
 
-	if result := dbClient.Create(&newBook); result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-		return
-	}
+// 	if result := dbClient.db.Create(&newBook); result.Error != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+// 		return
+// 	}
 
-	c.IndentedJSON(http.StatusCreated, newBook)
-}
+// 	c.IndentedJSON(http.StatusCreated, newBook)
+// }
 
-func getBook(c *gin.Context) {
-	id := c.Param("id")
+// func getBook(c *gin.Context) {
+// 	id := c.Param("id")
 
-	var book models.Book
-	result := dbClient.First(&book, id)
+// 	var book models.Book
+// 	result := dbClient.First(&book, id)
 
-	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-		return
-	}
+// 	if result.Error != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+// 		return
+// 	}
 
-	c.IndentedJSON(http.StatusOK, book)
-}
+// 	c.IndentedJSON(http.StatusOK, book)
+// }
 
-func deleteBook(c *gin.Context) {
-	id := c.Param("id")
+// func deleteBook(c *gin.Context) {
+// 	id := c.Param("id")
 
-	var book models.Book
-	if result := dbClient.Delete(&book, id); result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-		return
-	}
+// 	var book models.Book
+// 	if result := dbClient.Delete(&book, id); result.Error != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+// 		return
+// 	}
 
-	c.IndentedJSON(http.StatusOK, book)
-}
+// 	c.IndentedJSON(http.StatusOK, book)
+// }
 
-func getAllBooks(c *gin.Context) {
+// func getAllBooks(c *gin.Context) {
 
-	var books []models.Book
+// 	var books []models.Book
 
-	result := dbClient.Find(&books)
+// 	result := dbClient.Find(&books)
 
-	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-		return
-	}
+// 	if result.Error != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+// 		return
+// 	}
 
-	c.IndentedJSON(http.StatusOK, books)
-}
+// 	c.IndentedJSON(http.StatusOK, books)
+// }
