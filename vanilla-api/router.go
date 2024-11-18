@@ -28,3 +28,13 @@ func (r *router) addRoute(method, path string, handler http.HandlerFunc) {
 	}
 	r.routes[path][method] = handler
 }
+
+func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if handlers, ok := r.routes[req.URL.Path]; ok {
+		if handler, methodExists := handlers[req.Method]; methodExists {
+			handler(w, req)
+			return
+		}
+	}
+	http.NotFound(w, req)
+}
